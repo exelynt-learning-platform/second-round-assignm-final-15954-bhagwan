@@ -36,6 +36,15 @@ public class OrderController {
         var user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
         Cart cart = cartRepository.findByUser(user).orElseThrow();
         if (cart.getItems().isEmpty()) return ResponseEntity.badRequest().body("Cart is empty");
+        
+        // Validate stock availability for all items
+        for (CartItem item : cart.getItems()) {
+            Product product = item.getProduct();
+            if (product.getStockQuantity() < item.getQuantity()) {
+                return ResponseEntity.badRequest().body("Insufficient stock for product: " + product.getName());
+            }
+        }
+        
         OrderEntity order = new OrderEntity();
         order.setUser(user);
         var items = cart.getItems().stream().map(ci -> {
@@ -52,7 +61,15 @@ public class OrderController {
         order.setShippingAddress(shippingAddress);
         order.setPaymentStatus("PENDING");
         OrderEntity saved = orderRepository.save(order);
-        // Optionally clear cart
+        
+        // Update product stock quantities after successful order creation
+        for (CartItem item : cart.getItems()) {
+            Product product = item.getProduct();
+            product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
+            productRepository.save(product);
+        }
+        
+        // Clear cart
         cart.getItems().clear();
         cartRepository.save(cart);
         // Create payment intent
