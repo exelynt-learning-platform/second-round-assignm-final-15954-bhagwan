@@ -35,7 +35,7 @@ public class CartController {
     @PostMapping("/add")
     public ResponseEntity<?> addToCart(@AuthenticationPrincipal UserDetails userDetails, @RequestParam Long productId, @RequestParam int qty) {
         var user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
-        Cart cart = cartRepository.findByUser(user).orElseGet(() -> { Cart c = new Cart(); c.setUser(user); return c; });
+        Cart cart = cartRepository.findByUser(user).orElseGet(() -> { Cart c = new Cart(); c.setUser(user); return cartRepository.save(c); });
         Optional<Product> prodOpt = productRepository.findById(productId);
         if (prodOpt.isEmpty()) return ResponseEntity.notFound().build();
         Product p = prodOpt.get();
