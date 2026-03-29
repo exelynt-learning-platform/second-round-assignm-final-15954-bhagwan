@@ -40,7 +40,10 @@ public class CartController {
         if (prodOpt.isEmpty()) return ResponseEntity.notFound().build();
         Product p = prodOpt.get();
         if (p.getStockQuantity() < qty) return ResponseEntity.badRequest().body("Not enough stock");
-        CartItem item = new CartItem(); item.setProduct(p); item.setQuantity(qty);
+        CartItem item = new CartItem(); 
+        item.setProduct(p); 
+        item.setQuantity(qty);
+        item.setCart(cart);
         cart.getItems().add(item);
         Cart saved = cartRepository.save(cart);
         return ResponseEntity.ok(saved);
