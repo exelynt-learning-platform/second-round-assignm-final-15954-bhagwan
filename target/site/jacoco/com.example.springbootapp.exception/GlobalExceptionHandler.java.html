@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommanrce app</a> &gt; <a href="index.source.html" class="el_package">com.example.springbootapp.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.example.springbootapp.exception;
+
+import com.example.springbootapp.dto.ErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import java.time.Instant;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+
+@ControllerAdvice
+<span class="nc" id="L18">public class GlobalExceptionHandler {</span>
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleNotFound(NoSuchElementException ex, HttpServletRequest req) {
+<span class="nc" id="L22">        ErrorResponse er = new ErrorResponse(Instant.now(), HttpStatus.NOT_FOUND.value(), &quot;Not Found&quot;, ex.getMessage(), req.getRequestURI());</span>
+<span class="nc" id="L23">        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(er);</span>
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleBadRequest(IllegalArgumentException ex, HttpServletRequest req) {
+<span class="nc" id="L28">        ErrorResponse er = new ErrorResponse(Instant.now(), HttpStatus.BAD_REQUEST.value(), &quot;Bad Request&quot;, ex.getMessage(), req.getRequestURI());</span>
+<span class="nc" id="L29">        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(er);</span>
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
+<span class="nc" id="L34">        String msg = ex.getBindingResult().getFieldErrors().stream()</span>
+<span class="nc" id="L35">                .map(fe -&gt; fe.getField() + &quot;: &quot; + fe.getDefaultMessage())</span>
+<span class="nc" id="L36">                .collect(Collectors.joining(&quot;; &quot;));</span>
+<span class="nc" id="L37">        ErrorResponse er = new ErrorResponse(Instant.now(), HttpStatus.BAD_REQUEST.value(), &quot;Validation Failed&quot;, msg, req.getRequestURI());</span>
+<span class="nc" id="L38">        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(er);</span>
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleAccessDenied(AccessDeniedException ex, HttpServletRequest req) {
+<span class="nc" id="L43">        ErrorResponse er = new ErrorResponse(Instant.now(), HttpStatus.FORBIDDEN.value(), &quot;Forbidden&quot;, ex.getMessage(), req.getRequestURI());</span>
+<span class="nc" id="L44">        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(er);</span>
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleGeneric(Exception ex, HttpServletRequest req) {
+<span class="nc" id="L49">        ErrorResponse er = new ErrorResponse(Instant.now(), HttpStatus.INTERNAL_SERVER_ERROR.value(), &quot;Internal Server Error&quot;, ex.getMessage(), req.getRequestURI());</span>
+<span class="nc" id="L50">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(er);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

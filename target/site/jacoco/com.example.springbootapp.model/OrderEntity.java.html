@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderEntity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommanrce app</a> &gt; <a href="index.source.html" class="el_package">com.example.springbootapp.model</a> &gt; <span class="el_source">OrderEntity.java</span></div><h1>OrderEntity.java</h1><pre class="source lang-java linenums">package com.example.springbootapp.model;
+
+import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = &quot;orders&quot;)
+public class OrderEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    private User user;
+
+<span class="fc" id="L18">    @OneToMany(cascade = CascadeType.ALL)</span>
+    private List&lt;OrderItem&gt; items = new ArrayList&lt;&gt;();
+
+    private double totalPrice;
+
+    private String shippingAddress;
+
+    private String paymentStatus;
+
+    @Column(unique = true)
+    private String paymentSessionId;
+
+    private String paymentIntentId;
+
+    @Version
+    private Long version;
+
+<span class="fc" id="L35">    private Instant createdAt = Instant.now();</span>
+
+<span class="fc" id="L37">    public OrderEntity() {}</span>
+<span class="fc" id="L38">    public Long getId() { return id; }</span>
+<span class="fc" id="L39">    public void setId(Long id) { this.id = id; }</span>
+<span class="nc" id="L40">    public User getUser() { return user; }</span>
+<span class="nc" id="L41">    public void setUser(User user) { this.user = user; }</span>
+<span class="nc" id="L42">    public List&lt;OrderItem&gt; getItems() { return items; }</span>
+<span class="nc" id="L43">    public void setItems(List&lt;OrderItem&gt; items) { this.items = items; }</span>
+<span class="nc" id="L44">    public double getTotalPrice() { return totalPrice; }</span>
+<span class="fc" id="L45">    public void setTotalPrice(double totalPrice) { this.totalPrice = totalPrice; }</span>
+<span class="nc" id="L46">    public String getShippingAddress() { return shippingAddress; }</span>
+<span class="nc" id="L47">    public void setShippingAddress(String shippingAddress) { this.shippingAddress = shippingAddress; }</span>
+<span class="fc" id="L48">    public String getPaymentStatus() { return paymentStatus; }</span>
+<span class="fc" id="L49">    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }</span>
+<span class="nc" id="L50">    public String getPaymentSessionId() { return paymentSessionId; }</span>
+<span class="fc" id="L51">    public void setPaymentSessionId(String paymentSessionId) { this.paymentSessionId = paymentSessionId; }</span>
+<span class="nc" id="L52">    public String getPaymentIntentId() { return paymentIntentId; }</span>
+<span class="nc" id="L53">    public void setPaymentIntentId(String paymentIntentId) { this.paymentIntentId = paymentIntentId; }</span>
+<span class="nc" id="L54">    public Long getVersion() { return version; }</span>
+<span class="nc" id="L55">    public void setVersion(Long version) { this.version = version; }</span>
+<span class="nc" id="L56">    public Instant getCreatedAt() { return createdAt; }</span>
+<span class="nc" id="L57">    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

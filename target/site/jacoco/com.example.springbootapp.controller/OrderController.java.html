@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommanrce app</a> &gt; <a href="index.source.html" class="el_package">com.example.springbootapp.controller</a> &gt; <span class="el_source">OrderController.java</span></div><h1>OrderController.java</h1><pre class="source lang-java linenums">package com.example.springbootapp.controller;
+
+import com.example.springbootapp.model.*;
+import com.example.springbootapp.repository.CartRepository;
+import com.example.springbootapp.repository.OrderRepository;
+import com.example.springbootapp.repository.ProductRepository;
+import com.example.springbootapp.repository.UserRepository;
+import com.example.springbootapp.service.PaymentService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.stream.Collectors;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/orders&quot;)
+public class OrderController {
+    private final CartRepository cartRepository;
+    private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
+    private final PaymentService paymentService;
+
+<span class="nc" id="L26">    public OrderController(CartRepository cartRepository, UserRepository userRepository, OrderRepository orderRepository, ProductRepository productRepository, PaymentService paymentService) {</span>
+<span class="nc" id="L27">        this.cartRepository = cartRepository;</span>
+<span class="nc" id="L28">        this.userRepository = userRepository;</span>
+<span class="nc" id="L29">        this.orderRepository = orderRepository;</span>
+<span class="nc" id="L30">        this.productRepository = productRepository;</span>
+<span class="nc" id="L31">        this.paymentService = paymentService;</span>
+<span class="nc" id="L32">    }</span>
+
+    @PostMapping(&quot;/create&quot;)
+    public ResponseEntity&lt;?&gt; createOrder(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String shippingAddress) {
+<span class="nc" id="L36">        var user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();</span>
+<span class="nc" id="L37">        Cart cart = cartRepository.findByUser(user).orElseThrow();</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        if (cart.getItems().isEmpty()) return ResponseEntity.badRequest().body(&quot;Cart is empty&quot;);</span>
+<span class="nc" id="L39">        OrderEntity order = new OrderEntity();</span>
+<span class="nc" id="L40">        order.setUser(user);</span>
+<span class="nc" id="L41">        var items = cart.getItems().stream().map(ci -&gt; {</span>
+<span class="nc" id="L42">            OrderItem oi = new OrderItem();</span>
+<span class="nc" id="L43">            oi.setProductId(ci.getProduct().getId());</span>
+<span class="nc" id="L44">            oi.setProductName(ci.getProduct().getName());</span>
+<span class="nc" id="L45">            oi.setUnitPrice(ci.getProduct().getPrice());</span>
+<span class="nc" id="L46">            oi.setQuantity(ci.getQuantity());</span>
+<span class="nc" id="L47">            return oi;</span>
+<span class="nc" id="L48">        }).collect(Collectors.toList());</span>
+<span class="nc" id="L49">        order.setItems(items);</span>
+<span class="nc" id="L50">        double total = items.stream().mapToDouble(i -&gt; i.getUnitPrice() * i.getQuantity()).sum();</span>
+<span class="nc" id="L51">        order.setTotalPrice(total);</span>
+<span class="nc" id="L52">        order.setShippingAddress(shippingAddress);</span>
+<span class="nc" id="L53">        order.setPaymentStatus(&quot;PENDING&quot;);</span>
+<span class="nc" id="L54">        OrderEntity saved = orderRepository.save(order);</span>
+        // Optionally clear cart
+<span class="nc" id="L56">        cart.getItems().clear();</span>
+<span class="nc" id="L57">        cartRepository.save(cart);</span>
+        // Create payment intent
+<span class="nc" id="L59">        String paymentUrl = paymentService.createPayment(saved);</span>
+<span class="nc" id="L60">        return ResponseEntity.status(201).body(Map.of(&quot;orderId&quot;, saved.getId(), &quot;paymentUrl&quot;, paymentUrl));</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;?&gt; getOrder(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
+<span class="nc" id="L65">        var user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();</span>
+<span class="nc" id="L66">        return orderRepository.findById(id).map(o -&gt; {</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">            if (!o.getUser().getId().equals(user.getId())) return ResponseEntity.status(403).build();</span>
+<span class="nc" id="L68">            return ResponseEntity.ok(o);</span>
+<span class="nc" id="L69">        }).orElse(ResponseEntity.notFound().build());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

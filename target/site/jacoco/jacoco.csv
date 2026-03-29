@@ -1,0 +1,24 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+ecommanrce app,com.example.springbootapp.controller,CartController,80,78,6,2,8,15,8,3,4,3
+ecommanrce app,com.example.springbootapp.controller,ProductController,74,21,0,0,15,3,5,3,5,3
+ecommanrce app,com.example.springbootapp.controller,AuthController,80,0,0,0,17,0,3,0,3,0
+ecommanrce app,com.example.springbootapp.controller,OrderController,170,0,4,0,35,0,8,0,6,0
+ecommanrce app,com.example.springbootapp.controller,StripeWebhookController,70,54,9,3,16,16,6,4,1,3
+ecommanrce app,com.example.springbootapp.security,JwtAuthenticationFilter,55,0,6,0,14,0,5,0,2,0
+ecommanrce app,com.example.springbootapp.security,JwtUtil,10,73,3,3,4,19,3,5,0,5
+ecommanrce app,com.example.springbootapp.security,SecurityConfig,100,0,0,0,17,0,8,0,8,0
+ecommanrce app,com.example.springbootapp.service,PaymentService,72,38,4,4,26,10,4,2,0,2
+ecommanrce app,com.example.springbootapp.service,UserService,10,52,2,2,0,14,2,2,0,2
+ecommanrce app,com.example.springbootapp.service,CustomUserDetailsService,43,0,0,0,8,0,4,0,4,0
+ecommanrce app,com.example.springbootapp.exception,GlobalExceptionHandler,104,0,0,0,14,0,7,0,7,0
+ecommanrce app,com.example.springbootapp,Application,8,0,0,0,3,0,2,0,2,0
+ecommanrce app,com.example.springbootapp,HelloController,5,0,0,0,2,0,2,0,2,0
+ecommanrce app,com.example.springbootapp.model,OrderEntity,48,33,0,0,14,9,14,7,14,7
+ecommanrce app,com.example.springbootapp.model,CartItem,13,11,0,0,4,3,4,3,4,3
+ecommanrce app,com.example.springbootapp.model,Cart,10,19,0,0,3,5,3,4,3,4
+ecommanrce app,com.example.springbootapp.model,Role,0,15,0,0,0,3,0,1,0,1
+ecommanrce app,com.example.springbootapp.model,User,6,37,0,0,2,10,2,9,2,9
+ecommanrce app,com.example.springbootapp.model,Product,27,18,0,0,8,5,8,5,8,5
+ecommanrce app,com.example.springbootapp.model,OrderItem,38,0,0,0,11,0,11,0,11,0
+ecommanrce app,com.example.springbootapp.dto,ErrorResponse,56,0,0,0,18,0,12,0,12,0
+ecommanrce app,com.example.springbootapp.config,OpenApiConfig,40,0,0,0,10,0,2,0,2,0
