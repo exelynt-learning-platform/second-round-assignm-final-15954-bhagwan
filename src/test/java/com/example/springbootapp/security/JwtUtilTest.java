@@ -35,7 +35,7 @@ public class JwtUtilTest {
         String secret = "01234567890123456789012345678901";
         JwtUtil jwt = new JwtUtil(secret, 3600000);
         
-        assertThrows(JwtException.class, () -> jwt.validateToken("invalid.token.here"));
+        assertFalse(jwt.validateToken("invalid.token.here"));
     }
 
     @Test
@@ -56,7 +56,7 @@ public class JwtUtilTest {
         
         String token = jwt1.generateToken("testuser");
         
-        assertThrows(Exception.class, () -> jwt2.validateToken(token));
+        assertFalse(jwt2.validateToken(token));
     }
 
     @Test
@@ -73,7 +73,7 @@ public class JwtUtilTest {
             Thread.currentThread().interrupt();
         }
         
-        assertThrows(Exception.class, () -> jwt.validateToken(token));
+        assertFalse(jwt.validateToken(token));
     }
 
     @Test

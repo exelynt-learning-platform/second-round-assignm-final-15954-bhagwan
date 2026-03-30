@@ -53,7 +53,7 @@ public class OrderControllerTest {
         Cart cart = new Cart();
         cart.setId(1L);
         cart.setUser(user);
-        cart.setItems(Arrays.asList(item));
+        cart.setItems(new ArrayList<>(Arrays.asList(item)));
 
         OrderEntity savedOrder = new OrderEntity();
         savedOrder.setId(1L);
