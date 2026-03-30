@@ -54,6 +54,7 @@ public class CustomUserDetailsServiceTest {
     public void loadUserByUsernameCallsFindByUsername() {
         User user = new User();
         user.setUsername("user123");
+        user.setPassword("password");
         when(userRepository.findByUsername("user123")).thenReturn(Optional.of(user));
 
         userDetailsService.loadUserByUsername("user123");
