@@ -76,9 +76,12 @@ public class OrderService {
         // Initiate payment (sets payment session ID and saves order again)
         paymentService.createPayment(savedOrder);
         
+        // Clear the cart after successful order creation to prevent duplicate orders
+        cart.getItems().clear();
+        cartRepository.save(cart);
+        
         // Note: Stock is NOT updated here to avoid race condition.
         // Stock will be updated by webhook handler after payment confirmation.
-        // Cart is cleared after successful payment in separate operation.
         
         return savedOrder;
     }

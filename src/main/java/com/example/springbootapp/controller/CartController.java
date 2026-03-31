@@ -58,22 +58,45 @@ public class CartController {
         }
         Product product = prodOpt.get();
         
+        // Calculate total quantity already in cart for this product
+        int quantityInCart = cart.getItems().stream()
+            .filter(item -> item.getProduct().getId().equals(productId))
+            .mapToInt(CartItem::getQuantity)
+            .sum();
+        
+        int totalQuantity = quantityInCart + qty;
+        
         // Validate stock availability BEFORE creating CartItem
-        if (product.getStockQuantity() < qty) {
+        // Check total quantity (existing + requested) against available stock
+        if (product.getStockQuantity() < totalQuantity) {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Not enough stock",
                 "available", product.getStockQuantity(),
-                "requested", qty
+                "alreadyInCart", quantityInCart,
+                "requested", qty,
+                "total", totalQuantity
             ));
         }
         
-        // Create cart item with proper initialization
-        CartItem item = new CartItem(); 
-        item.setCart(cart);
-        item.setProduct(product);
-        item.setQuantity(qty);  // Quantity set before adding to cart
+        // Check if product already exists in cart - if so, update quantity
+        boolean found = false;
+        for (CartItem existingItem : cart.getItems()) {
+            if (existingItem.getProduct().getId().equals(productId)) {
+                existingItem.setQuantity(existingItem.getQuantity() + qty);
+                found = true;
+                break;
+            }
+        }
         
-        cart.getItems().add(item);
+        // If product not in cart, create new cart item with proper initialization
+        if (!found) {
+            CartItem item = new CartItem(); 
+            item.setCart(cart);
+            item.setProduct(product);
+            item.setQuantity(qty);
+            cart.getItems().add(item);
+        }
+        
         Cart saved = cartRepository.save(cart);
         return ResponseEntity.ok(saved);
     }
