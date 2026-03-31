@@ -34,14 +34,17 @@ public class StripeWebhookController {
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody String payload, @RequestHeader(value = "Stripe-Signature", required = false) String sigHeader) {
         try {
-            Event event;
-            if (webhookSecret != null && !webhookSecret.isBlank()) {
-                event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
-            } else {
-                // No webhook secret configured (dev); try to parse event without signature verification
-                event = Event.GSON.fromJson(payload, Event.class);
+            // Require signature verification
+            if (webhookSecret == null || webhookSecret.isBlank()) {
+                logger.error("Webhook secret not configured - rejecting unsigned webhook");
+                return ResponseEntity.status(401).body("Webhook secret not configured");
             }
-
+            if (sigHeader == null || sigHeader.isBlank()) {
+                logger.warn("Missing Stripe-Signature header");
+                return ResponseEntity.status(400).body("Missing signature header");
+            }
+            
+            Event event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
             String type = event.getType();
             logger.info("Received Stripe event: {}", type);
             if ("checkout.session.completed".equals(type)) {

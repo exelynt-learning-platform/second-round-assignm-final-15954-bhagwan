@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.stream.Collectors;
 import java.util.Map;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -32,6 +33,7 @@ public class OrderController {
     }
 
     @PostMapping("/create")
+    @Transactional
     public ResponseEntity<?> createOrder(@AuthenticationPrincipal UserDetails userDetails, @RequestParam String shippingAddress) {
         var user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
         Cart cart = cartRepository.findByUser(user).orElseThrow();
@@ -62,6 +64,9 @@ public class OrderController {
         order.setPaymentStatus("PENDING");
         OrderEntity saved = orderRepository.save(order);
         
+        // Create payment intent and set payment session ID before modifying cart/stock
+        String paymentUrl = paymentService.createPayment(saved);
+        
         // Update product stock quantities after successful order creation
         for (CartItem item : cart.getItems()) {
             Product product = item.getProduct();
@@ -72,8 +77,6 @@ public class OrderController {
         // Clear cart
         cart.getItems().clear();
         cartRepository.save(cart);
-        // Create payment intent
-        String paymentUrl = paymentService.createPayment(saved);
         return ResponseEntity.status(201).body(Map.of("orderId", saved.getId(), "paymentUrl", paymentUrl));
     }
 
