@@ -2,6 +2,7 @@ package com.example.springbootapp.controller;
 
 import com.example.springbootapp.model.OrderEntity;
 import com.example.springbootapp.repository.OrderRepository;
+import com.example.springbootapp.service.OrderService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
@@ -25,10 +26,13 @@ public class StripeWebhookController {
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookController.class);
     private final String webhookSecret;
     private final OrderRepository orderRepository;
+    private final OrderService orderService;
 
-    public StripeWebhookController(@Value("${stripe.webhook.secret:}") String webhookSecret, OrderRepository orderRepository) {
+    public StripeWebhookController(@Value("${stripe.webhook.secret:}") String webhookSecret, 
+                                   OrderRepository orderRepository, OrderService orderService) {
         this.webhookSecret = webhookSecret;
         this.orderRepository = orderRepository;
+        this.orderService = orderService;
     }
 
     @PostMapping("/webhook")
@@ -68,9 +72,21 @@ public class StripeWebhookController {
         if (opt.isPresent()) {
             OrderEntity order = opt.get();
             if (!"PAID".equals(order.getPaymentStatus())) {
+                // Mark order as paid
                 order.setPaymentStatus("PAID");
                 orderRepository.save(order);
                 logger.info("Order {} marked as PAID", order.getId());
+                
+                // Update stock quantities now that payment is confirmed
+                // This prevents race condition where stock was updated before payment
+                try {
+                    orderService.updateStockForConfirmedOrder(order.getId());
+                    logger.info("Stock updated for Order {}", order.getId());
+                } catch (Exception e) {
+                    logger.error("Failed to update stock for Order {}: {}", order.getId(), e.getMessage(), e);
+                    // Note: Order is already marked as PAID, but stock update failed
+                    // This should trigger a manual review or retry mechanism in production
+                }
             } else {
                 logger.info("Order {} already PAID", order.getId());
             }

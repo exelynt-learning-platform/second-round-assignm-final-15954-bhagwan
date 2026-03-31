@@ -45,15 +45,34 @@ public class CartController {
         }
         
         var user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
-        Cart cart = cartRepository.findByUser(user).orElseGet(() -> { Cart c = new Cart(); c.setUser(user); return cartRepository.save(c); });
+        Cart cart = cartRepository.findByUser(user).orElseGet(() -> { 
+            Cart c = new Cart(); 
+            c.setUser(user); 
+            return cartRepository.save(c); 
+        });
+        
+        // Get product
         Optional<Product> prodOpt = productRepository.findById(productId);
-        if (prodOpt.isEmpty()) return ResponseEntity.notFound().build();
-        Product p = prodOpt.get();
-        if (p.getStockQuantity() < qty) return ResponseEntity.badRequest().body("Not enough stock");
+        if (prodOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Product product = prodOpt.get();
+        
+        // Validate stock availability BEFORE creating CartItem
+        if (product.getStockQuantity() < qty) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Not enough stock",
+                "available", product.getStockQuantity(),
+                "requested", qty
+            ));
+        }
+        
+        // Create cart item with proper initialization
         CartItem item = new CartItem(); 
-        item.setProduct(p); 
-        item.setQuantity(qty);
         item.setCart(cart);
+        item.setProduct(product);
+        item.setQuantity(qty);  // Quantity set before adding to cart
+        
         cart.getItems().add(item);
         Cart saved = cartRepository.save(cart);
         return ResponseEntity.ok(saved);
@@ -66,10 +85,19 @@ public class CartController {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid cart item ID"));
         }
         
-        var user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
-        Cart cart = cartRepository.findByUser(user).orElseThrow();
-        cart.getItems().removeIf(i -> Objects.equals(i.getId(), cartItemId));
-        cartRepository.save(cart);
-        return ResponseEntity.ok().build();
+        try {
+            var user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
+            Cart cart = cartRepository.findByUser(user).orElseThrow();
+            
+            boolean removed = cart.getItems().removeIf(i -> Objects.equals(i.getId(), cartItemId));
+            if (!removed) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            cartRepository.save(cart);
+            return ResponseEntity.ok(Map.of("message", "Item removed from cart"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to remove item: " + e.getMessage()));
+        }
     }
 }
