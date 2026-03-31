@@ -19,13 +19,11 @@ public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
 
-    public AuthController(UserService userService, AuthenticationManager authenticationManager, JwtUtil jwtUtil, UserRepository userRepository) {
+    public AuthController(UserService userService, AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
-        this.userRepository = userRepository;
     }
 
     @PostMapping("/register")
@@ -33,6 +31,21 @@ public class AuthController {
         String username = body.get("username");
         String email = body.get("email");
         String password = body.get("password");
+        
+        // Input validation
+        if (username == null || username.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Username is required"));
+        }
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+        }
+        if (password == null || password.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Password is required"));
+        }
+        if (password.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Password must be at least 6 characters"));
+        }
+        
         User u = userService.register(username, email, password);
         return ResponseEntity.status(201).body(Map.of("id", u.getId(), "username", u.getUsername()));
     }
@@ -41,6 +54,15 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
         String username = body.get("username");
         String password = body.get("password");
+        
+        // Input validation
+        if (username == null || username.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Username is required"));
+        }
+        if (password == null || password.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Password is required"));
+        }
+        
         Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
         SecurityContextHolder.getContext().setAuthentication(auth);
         String token = jwtUtil.generateToken(username);

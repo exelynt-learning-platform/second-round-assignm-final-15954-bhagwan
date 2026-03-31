@@ -9,7 +9,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cart")
@@ -34,6 +36,14 @@ public class CartController {
 
     @PostMapping("/add")
     public ResponseEntity<?> addToCart(@AuthenticationPrincipal UserDetails userDetails, @RequestParam Long productId, @RequestParam int qty) {
+        // Input validation
+        if (productId == null || productId <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid product ID"));
+        }
+        if (qty <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Quantity must be greater than 0"));
+        }
+        
         var user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
         Cart cart = cartRepository.findByUser(user).orElseGet(() -> { Cart c = new Cart(); c.setUser(user); return cartRepository.save(c); });
         Optional<Product> prodOpt = productRepository.findById(productId);
@@ -51,9 +61,14 @@ public class CartController {
 
     @PostMapping("/remove")
     public ResponseEntity<?> removeFromCart(@AuthenticationPrincipal UserDetails userDetails, @RequestParam Long cartItemId) {
+        // Input validation
+        if (cartItemId == null || cartItemId <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid cart item ID"));
+        }
+        
         var user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
         Cart cart = cartRepository.findByUser(user).orElseThrow();
-        cart.getItems().removeIf(i -> i.getId() != null && i.getId().equals(cartItemId));
+        cart.getItems().removeIf(i -> Objects.equals(i.getId(), cartItemId));
         cartRepository.save(cart);
         return ResponseEntity.ok().build();
     }
