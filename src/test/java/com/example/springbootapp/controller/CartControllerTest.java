@@ -217,12 +217,11 @@ public class CartControllerTest {
 
         when(userRepository.findByUsername("henry")).thenReturn(Optional.of(u));
         when(cartRepository.findByUser(u)).thenReturn(Optional.of(cart));
-        when(cartRepository.save(any())).thenReturn(cart);
 
         UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("henry").password("x").authorities("ROLE_USER").build();
         var resp = controller.removeFromCart(ud, 999L);
 
-        assertTrue(resp.getStatusCode().is2xxSuccessful());
-        verify(cartRepository, times(1)).save(cart);
+        assertEquals(404, resp.getStatusCode().value());
+        verify(cartRepository, never()).save(cart);
     }
 }

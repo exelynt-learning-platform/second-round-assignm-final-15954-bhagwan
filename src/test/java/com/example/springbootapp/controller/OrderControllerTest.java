@@ -2,7 +2,7 @@ package com.example.springbootapp.controller;
 
 import com.example.springbootapp.model.*;
 import com.example.springbootapp.repository.*;
-import com.example.springbootapp.service.PaymentService;
+import com.example.springbootapp.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,15 +20,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class OrderControllerTest {
     @Mock
-    CartRepository cartRepository;
+    OrderRepository orderRepository;
     @Mock
     UserRepository userRepository;
     @Mock
-    OrderRepository orderRepository;
-    @Mock
-    ProductRepository productRepository;
-    @Mock
-    PaymentService paymentService;
+    OrderService orderService;
 
     @InjectMocks
     OrderController controller;
@@ -39,90 +35,41 @@ public class OrderControllerTest {
         user.setId(1L);
         user.setUsername("user1");
 
-        Product product = new Product();
-        product.setId(1L);
-        product.setName("Test Product");
-        product.setPrice(100.0);
-        product.setStockQuantity(10);
-
-        CartItem item = new CartItem();
-        item.setId(1L);
-        item.setProduct(product);
-        item.setQuantity(2);
-
-        Cart cart = new Cart();
-        cart.setId(1L);
-        cart.setUser(user);
-        cart.setItems(new ArrayList<>(Arrays.asList(item)));
-
         OrderEntity savedOrder = new OrderEntity();
         savedOrder.setId(1L);
         savedOrder.setUser(user);
+        savedOrder.setTotalPrice(200.0);
+        savedOrder.setPaymentStatus("PENDING");
 
-        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
-        when(orderRepository.save(any())).thenReturn(savedOrder);
-        when(paymentService.createPayment(savedOrder)).thenReturn("https://payment.url");
+        when(orderService.createOrderWithPayment("user1", "123 Main St")).thenReturn(savedOrder);
 
         UserDetails userDetails = org.springframework.security.core.userdetails.User.withUsername("user1").password("x").authorities("ROLE_USER").build();
         ResponseEntity<?> response = controller.createOrder(userDetails, "123 Main St");
 
         assertTrue(response.getStatusCode().is2xxSuccessful());
-        verify(orderRepository).save(any());
-        verify(paymentService).createPayment(savedOrder);
+        verify(orderService).createOrderWithPayment("user1", "123 Main St");
     }
 
     @Test
     public void createOrderFailsWithEmptyCart() {
-        User user = new User();
-        user.setId(1L);
-        user.setUsername("user1");
-
-        Cart empty_cart = new Cart();
-        empty_cart.setId(1L);
-        empty_cart.setUser(user);
-        empty_cart.setItems(new ArrayList<>());
-
-        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(empty_cart));
+        when(orderService.createOrderWithPayment("user1", "123 Main St"))
+            .thenThrow(new IllegalArgumentException("Cart is empty"));
 
         UserDetails userDetails = org.springframework.security.core.userdetails.User.withUsername("user1").password("x").authorities("ROLE_USER").build();
         ResponseEntity<?> response = controller.createOrder(userDetails, "123 Main St");
 
         assertEquals(400, response.getStatusCode().value());
-        verify(orderRepository, never()).save(any());
     }
 
     @Test
     public void createOrderFailsWithInsufficientStock() {
-        User user = new User();
-        user.setId(1L);
-        user.setUsername("user1");
-
-        Product product = new Product();
-        product.setId(1L);
-        product.setName("Test Product");
-        product.setPrice(100.0);
-        product.setStockQuantity(1); // Only 1 in stock
-
-        CartItem item = new CartItem();
-        item.setId(1L);
-        item.setProduct(product);
-        item.setQuantity(5); // Trying to order 5
-
-        Cart cart = new Cart();
-        cart.setId(1L);
-        cart.setUser(user);
-        cart.setItems(Arrays.asList(item));
-
-        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(orderService.createOrderWithPayment("user1", "123 Main St"))
+            .thenThrow(new IllegalArgumentException("Insufficient stock for product: Test Product"));
 
         UserDetails userDetails = org.springframework.security.core.userdetails.User.withUsername("user1").password("x").authorities("ROLE_USER").build();
         ResponseEntity<?> response = controller.createOrder(userDetails, "123 Main St");
 
         assertEquals(400, response.getStatusCode().value());
-        verify(orderRepository, never()).save(any());
     }
 
     @Test

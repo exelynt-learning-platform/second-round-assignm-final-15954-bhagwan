@@ -2,7 +2,7 @@ package com.example.springbootapp.controller;
 
 import com.example.springbootapp.model.*;
 import com.example.springbootapp.repository.*;
-import com.example.springbootapp.service.PaymentService;
+import com.example.springbootapp.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,21 +14,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderControllerExtendedTest {
     @Mock
-    CartRepository cartRepository;
-    @Mock
     UserRepository userRepository;
     @Mock
     OrderRepository orderRepository;
     @Mock
-    ProductRepository productRepository;
-    @Mock
-    PaymentService paymentService;
+    OrderService orderService;
 
     @InjectMocks
     OrderController controller;
@@ -95,14 +90,8 @@ public class OrderControllerExtendedTest {
 
     @Test
     public void createOrderWithEmptyCart() {
-        User user = new User();
-        user.setId(1L);
-
-        Cart cart = new Cart();
-        cart.setItems(new ArrayList<>());
-
-        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(orderService.createOrderWithPayment("user1", "123 Main St"))
+            .thenThrow(new IllegalArgumentException("Cart is empty"));
 
         UserDetails userDetails = org.springframework.security.core.userdetails.User.withUsername("user1")
             .password("x").authorities("ROLE_USER").build();
@@ -114,23 +103,8 @@ public class OrderControllerExtendedTest {
 
     @Test
     public void createOrderWithInsufficientStock() {
-        User user = new User();
-        user.setId(1L);
-
-        Product product = new Product();
-        product.setId(1L);
-        product.setName("Item");
-        product.setStockQuantity(2);
-
-        CartItem cartItem = new CartItem();
-        cartItem.setQuantity(10);
-        cartItem.setProduct(product);
-
-        Cart cart = new Cart();
-        cart.setItems(Arrays.asList(cartItem));
-
-        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(orderService.createOrderWithPayment("user1", "123 Main St"))
+            .thenThrow(new IllegalArgumentException("Insufficient stock for product: Item (Available: 2, Requested: 10)"));
 
         UserDetails userDetails = org.springframework.security.core.userdetails.User.withUsername("user1")
             .password("x").authorities("ROLE_USER").build();
