@@ -2,7 +2,9 @@ package com.example.springbootapp.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +25,16 @@ public class OpenApiConfig {
                         )
                 )
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
-                .info(new Info().title("Ecommanrce API").version("v1").description("Ecommanrce app API"));
+                .info(new Info()
+                        .title("Ecommerce API")
+                        .version("v1")
+                        .description("Ecommerce application API")
+                        .contact(new Contact()
+                                .name("API Support")
+                                .email("support@ecommerce.com")
+                                .url("https://ecommerce.com"))
+                        .license(new License()
+                                .name("Apache 2.0")
+                                .url("https://www.apache.org/licenses/LICENSE-2.0.html")));
     }
 }

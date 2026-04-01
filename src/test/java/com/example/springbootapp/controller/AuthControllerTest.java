@@ -1,5 +1,7 @@
 package com.example.springbootapp.controller;
 
+import com.example.springbootapp.dto.RegisterRequest;
+import com.example.springbootapp.dto.LoginRequest;
 import com.example.springbootapp.model.User;
 import com.example.springbootapp.security.JwtUtil;
 import com.example.springbootapp.service.UserService;
@@ -40,8 +42,8 @@ public class AuthControllerTest {
         newUser.setUsername("alice");
         when(userService.register("alice", "alice@example.com", "password123")).thenReturn(newUser);
 
-        Map<String, String> body = Map.of("username", "alice", "email", "alice@example.com", "password", "password123");
-        ResponseEntity<?> response = controller.register(body);
+        RegisterRequest request = new RegisterRequest("alice", "alice@example.com", "password123");
+        ResponseEntity<?> response = controller.register(request);
         
         assertTrue(response.getStatusCode().is2xxSuccessful());
         verify(userService, times(1)).register("alice", "alice@example.com", "password123");
@@ -52,8 +54,8 @@ public class AuthControllerTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(jwtUtil.generateToken("bob")).thenReturn("jwt_token_here");
 
-        Map<String, String> body = Map.of("username", "bob", "password", "password123");
-        ResponseEntity<?> response = controller.login(body);
+        LoginRequest request = new LoginRequest("bob", "password123");
+        ResponseEntity<?> response = controller.login(request);
         
         assertTrue(response.getStatusCode().is2xxSuccessful());
         verify(authenticationManager, times(1)).authenticate(any());
@@ -64,8 +66,10 @@ public class AuthControllerTest {
     public void loginHandlesAuthenticationFailure() {
         when(authenticationManager.authenticate(any())).thenThrow(new org.springframework.security.core.AuthenticationException("Invalid credentials"){});
 
-        Map<String, String> body = Map.of("username", "user", "password", "wrongpassword");
+        LoginRequest request = new LoginRequest("user", "wrongpassword");
+        ResponseEntity<?> response = controller.login(request);
         
-        assertThrows(Exception.class, () -> controller.login(body));
+        assertTrue(response.getStatusCode().is4xxClientError());
+        assertEquals(401, response.getStatusCodeValue());
     }
 }

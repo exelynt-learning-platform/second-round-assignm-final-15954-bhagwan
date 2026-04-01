@@ -29,8 +29,8 @@ public class OrderEntityTest {
         order.setShippingAddress("123 Main St");
         assertEquals("123 Main St", order.getShippingAddress());
         
-        order.setPaymentStatus("PENDING");
-        assertEquals("PENDING", order.getPaymentStatus());
+        order.setPaymentStatus(PaymentStatus.PENDING);
+        assertEquals(PaymentStatus.PENDING, order.getPaymentStatus());
         
         order.setPaymentSessionId("sess_123");
         assertEquals("sess_123", order.getPaymentSessionId());

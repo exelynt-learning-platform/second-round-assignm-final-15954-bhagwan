@@ -1,9 +1,12 @@
 package com.example.springbootapp.controller;
 
 import com.example.springbootapp.model.User;
+import com.example.springbootapp.dto.RegisterRequest;
+import com.example.springbootapp.dto.LoginRequest;
 import com.example.springbootapp.security.JwtUtil;
 import com.example.springbootapp.service.UserService;
 import com.example.springbootapp.repository.UserRepository;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,45 +30,25 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
-        String email = body.get("email");
-        String password = body.get("password");
-        
-        // Input validation
-        if (username == null || username.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Username is required"));
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        try {
+            User u = userService.register(request.getUsername(), request.getEmail(), request.getPassword());
+            return ResponseEntity.status(201).body(Map.of("id", u.getId(), "username", u.getUsername()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-        if (email == null || email.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
-        }
-        if (password == null || password.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Password is required"));
-        }
-        if (password.length() < 6) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Password must be at least 6 characters"));
-        }
-        
-        User u = userService.register(username, email, password);
-        return ResponseEntity.status(201).body(Map.of("id", u.getId(), "username", u.getUsername()));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
-        String password = body.get("password");
-        
-        // Input validation
-        if (username == null || username.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Username is required"));
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        try {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            String token = jwtUtil.generateToken(request.getUsername());
+            return ResponseEntity.ok(Map.of("token", token));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid username or password"));
         }
-        if (password == null || password.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Password is required"));
-        }
-        
-        Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        String token = jwtUtil.generateToken(username);
-        return ResponseEntity.ok(Map.of("token", token));
     }
 }

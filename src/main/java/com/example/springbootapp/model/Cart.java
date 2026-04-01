@@ -1,10 +1,18 @@
 package com.example.springbootapp.model;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
+@Table(name = "cart")
 public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,14 +21,26 @@ public class Cart {
     @OneToOne
     private User user;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "cart")
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "cart", fetch = FetchType.EAGER)
     private List<CartItem> items = new ArrayList<>();
 
-    public Cart() {}
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-    public List<CartItem> getItems() { return items; }
-    public void setItems(List<CartItem> items) { this.items = items; }
+    @PostLoad
+    @PostConstruct
+    public void init() {
+        if (this.items == null) {
+            this.items = new ArrayList<>();
+        }
+    }
+
+    public List<CartItem> getItems() {
+        // Ensure items list is never null
+        if (this.items == null) {
+            this.items = new ArrayList<>();
+        }
+        return items;
+    }
+
+    public void setItems(List<CartItem> items) { 
+        this.items = items != null ? items : new ArrayList<>(); 
+    }
 }

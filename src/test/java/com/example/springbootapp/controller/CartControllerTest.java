@@ -175,6 +175,102 @@ public class CartControllerTest {
     }
 
     @Test
+    public void addToCartFailsWithNegativeQuantity() {
+        UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("henry").password("x").authorities("ROLE_USER").build();
+        var resp = controller.addToCart(ud, 5L, -1);
+
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    public void addToCartFailsWithZeroQuantity() {
+        UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("iris").password("x").authorities("ROLE_USER").build();
+        var resp = controller.addToCart(ud, 5L, 0);
+
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    public void addToCartFailsWithNullProductId() {
+        UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("jack").password("x").authorities("ROLE_USER").build();
+        var resp = controller.addToCart(ud, null, 1);
+
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    public void addToCartFailsWithNegativeProductId() {
+        UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("karl").password("x").authorities("ROLE_USER").build();
+        var resp = controller.addToCart(ud, -5L, 1);
+
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    public void addToCartUpdatesExistingItem() {
+        User u = new User();
+        u.setId(1L);
+        u.setUsername("laura");
+
+        Product p = new Product();
+        p.setId(5L);
+        p.setName("Product");
+        p.setStockQuantity(20);
+
+        CartItem existingItem = new CartItem();
+        existingItem.setId(1L);
+        existingItem.setProduct(p);
+        existingItem.setQuantity(2);
+
+        Cart cart = new Cart();
+        cart.setId(1L);
+        cart.setUser(u);
+        cart.setItems(new ArrayList<>(Arrays.asList(existingItem)));
+
+        when(userRepository.findByUsername("laura")).thenReturn(Optional.of(u));
+        when(cartRepository.findByUser(u)).thenReturn(Optional.of(cart));
+        when(productRepository.findById(5L)).thenReturn(Optional.of(p));
+        when(cartRepository.save(any())).thenReturn(cart);
+
+        UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("laura").password("x").authorities("ROLE_USER").build();
+        var resp = controller.addToCart(ud, 5L, 3);
+
+        assertTrue(resp.getStatusCode().is2xxSuccessful());
+        assertEquals(5, existingItem.getQuantity()); // 2 + 3
+    }
+
+    @Test
+    public void addToCartFailsWithInsufficientStockWhenUpdatingItem() {
+        User u = new User();
+        u.setId(1L);
+        u.setUsername("mark");
+
+        Product p = new Product();
+        p.setId(5L);
+        p.setName("Product");
+        p.setStockQuantity(5); // Only 5 in stock
+
+        CartItem existingItem = new CartItem();
+        existingItem.setId(1L);
+        existingItem.setProduct(p);
+        existingItem.setQuantity(3); // 3 already in cart
+
+        Cart cart = new Cart();
+        cart.setId(1L);
+        cart.setUser(u);
+        cart.setItems(new ArrayList<>(Arrays.asList(existingItem)));
+
+        when(userRepository.findByUsername("mark")).thenReturn(Optional.of(u));
+        when(cartRepository.findByUser(u)).thenReturn(Optional.of(cart));
+        when(productRepository.findById(5L)).thenReturn(Optional.of(p));
+
+        UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("mark").password("x").authorities("ROLE_USER").build();
+        var resp = controller.addToCart(ud, 5L, 3); // Trying to add 3 more (total would be 6, but only 5 available)
+
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
     public void removeFromCartRemovesItem() {
         User u = new User();
         u.setId(1L);
@@ -223,5 +319,44 @@ public class CartControllerTest {
 
         assertEquals(404, resp.getStatusCode().value());
         verify(cartRepository, never()).save(cart);
+    }
+
+    @Test
+    public void removeFromCartFailsWithNullCartItemId() {
+        UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("nancy").password("x").authorities("ROLE_USER").build();
+        var resp = controller.removeFromCart(ud, null);
+
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    public void removeFromCartFailsWithNegativeCartItemId() {
+        UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("oscar").password("x").authorities("ROLE_USER").build();
+        var resp = controller.removeFromCart(ud, -1L);
+
+        assertEquals(400, resp.getStatusCode().value());
+    }
+
+    @Test
+    public void removeFromCartHandlesException() {
+        User u = new User();
+        u.setId(1L);
+        u.setUsername("paul");
+
+        when(userRepository.findByUsername("paul")).thenReturn(Optional.of(u));
+        when(cartRepository.findByUser(u)).thenThrow(new RuntimeException("DB error"));
+
+        UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("paul").password("x").authorities("ROLE_USER").build();
+        var resp = controller.removeFromCart(ud, 1L);
+
+        assertEquals(500, resp.getStatusCode().value());
+    }
+
+    @Test
+    public void addToCartWithZeroProductId() {
+        UserDetails ud = org.springframework.security.core.userdetails.User.withUsername("quinn").password("x").authorities("ROLE_USER").build();
+        var resp = controller.addToCart(ud, 0L, 1);
+
+        assertEquals(400, resp.getStatusCode().value());
     }
 }

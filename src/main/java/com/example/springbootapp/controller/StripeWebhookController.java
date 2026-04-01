@@ -1,6 +1,7 @@
 package com.example.springbootapp.controller;
 
 import com.example.springbootapp.model.OrderEntity;
+import com.example.springbootapp.model.PaymentStatus;
 import com.example.springbootapp.repository.OrderRepository;
 import com.example.springbootapp.service.OrderService;
 import com.stripe.exception.SignatureVerificationException;
@@ -48,19 +49,28 @@ public class StripeWebhookController {
                 return ResponseEntity.status(400).body("Missing signature header");
             }
             
+            logger.debug("Processing webhook payload with signature verification");
             Event event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
             String type = event.getType();
             logger.info("Received Stripe event: {}", type);
+            
             if ("checkout.session.completed".equals(type)) {
                 Session session = (Session) event.getDataObjectDeserializer().getObject().orElse(null);
-                if (session != null) handleCheckoutCompleted(session);
+                if (session != null) {
+                    logger.debug("Processing checkout session: {}", session.getId());
+                    handleCheckoutCompleted(session);
+                } else {
+                    logger.warn("Received checkout.session.completed event but session is null");
+                }
+            } else {
+                logger.debug("Ignoring unhandled event type: {}", type);
             }
             return ResponseEntity.ok("");
         } catch (SignatureVerificationException ex) {
-            logger.warn("Invalid webhook signature", ex);
+            logger.warn("Invalid webhook signature: {}", ex.getMessage());
             return ResponseEntity.status(400).body("Invalid signature");
         } catch (Exception ex) {
-            logger.error("Webhook handling failed", ex);
+            logger.error("Webhook handling failed with error: {}", ex.getMessage(), ex);
             return ResponseEntity.status(500).body("Error");
         }
     }
@@ -71,9 +81,9 @@ public class StripeWebhookController {
         Optional<OrderEntity> opt = orderRepository.findByPaymentSessionId(sessionId);
         if (opt.isPresent()) {
             OrderEntity order = opt.get();
-            if (!"PAID".equals(order.getPaymentStatus())) {
+            if (order.getPaymentStatus() != PaymentStatus.PAID) {
                 // Mark order as paid
-                order.setPaymentStatus("PAID");
+                order.setPaymentStatus(PaymentStatus.PAID);
                 orderRepository.save(order);
                 logger.info("Order {} marked as PAID", order.getId());
                 

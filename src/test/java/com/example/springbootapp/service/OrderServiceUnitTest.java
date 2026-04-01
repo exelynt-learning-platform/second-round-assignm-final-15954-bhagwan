@@ -51,7 +51,7 @@ public class OrderServiceUnitTest {
 
         OrderEntity order = new OrderEntity();
         order.setId(1L);
-        order.setPaymentStatus("PENDING");
+        order.setPaymentStatus(PaymentStatus.PENDING);
 
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
