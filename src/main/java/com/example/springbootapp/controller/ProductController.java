@@ -2,6 +2,7 @@ package com.example.springbootapp.controller;
 
 import com.example.springbootapp.model.Product;
 import com.example.springbootapp.repository.ProductRepository;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,14 +27,14 @@ public class ProductController {
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping
-    public ResponseEntity<Product> create(@RequestBody Product p) {
+    public ResponseEntity<Product> create(@Valid @RequestBody Product p) {
         Product saved = productRepository.save(p);
         return ResponseEntity.created(URI.create("/api/products/" + saved.getId())).body(saved);
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<Product> update(@PathVariable Long id, @RequestBody Product p) {
+    public ResponseEntity<Product> update(@PathVariable Long id, @Valid @RequestBody Product p) {
         return productRepository.findById(id).map(existing -> {
             existing.setName(p.getName());
             existing.setDescription(p.getDescription());

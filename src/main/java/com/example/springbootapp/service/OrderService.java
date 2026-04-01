@@ -152,7 +152,7 @@ public class OrderService {
         order.setTotalPrice(total);
         
         order.setShippingAddress(shippingAddress);
-        order.setPaymentStatus("PENDING");
+        order.setPaymentStatus(PaymentStatus.PENDING);
         
         return order;
     }

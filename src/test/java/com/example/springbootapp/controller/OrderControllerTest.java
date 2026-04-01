@@ -39,7 +39,7 @@ public class OrderControllerTest {
         savedOrder.setId(1L);
         savedOrder.setUser(user);
         savedOrder.setTotalPrice(200.0);
-        savedOrder.setPaymentStatus("PENDING");
+        savedOrder.setPaymentStatus(PaymentStatus.PENDING);
 
         when(orderService.createOrderWithPayment("user1", "123 Main St")).thenReturn(savedOrder);
 

@@ -1,6 +1,7 @@
 package com.example.springbootapp.service;
 
 import com.example.springbootapp.model.OrderEntity;
+import com.example.springbootapp.model.PaymentStatus;
 import com.example.springbootapp.repository.OrderRepository;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
@@ -29,7 +30,7 @@ public class PaymentService {
         if (stripeKey == null || stripeKey.isBlank()) {
             // fallback: set a mock session id and return a dummy URL for tests/dev
             order.setPaymentSessionId("mock-session-" + order.getId());
-            order.setPaymentStatus("PENDING");
+            order.setPaymentStatus(PaymentStatus.PENDING);
             orderRepository.save(order);
             return "/mock-pay?orderId=" + order.getId();
         }
@@ -55,7 +56,7 @@ public class PaymentService {
                     .build();
             Session session = Session.create(params, requestOptions);
             order.setPaymentSessionId(session.getId());
-            order.setPaymentStatus("PENDING");
+            order.setPaymentStatus(PaymentStatus.PENDING);
             orderRepository.save(order);
             return session.getUrl();
         } catch (StripeException e) {

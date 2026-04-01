@@ -75,13 +75,13 @@ public class EntityModelTest {
         OrderEntity order = new OrderEntity();
         order.setId(1L);
         order.setTotalPrice(299.99);
-        order.setPaymentStatus("PENDING");
+        order.setPaymentStatus(PaymentStatus.PENDING);
         order.setShippingAddress("123 Main St");
         order.setItems(new ArrayList<>());
 
         assertEquals(1L, order.getId());
         assertEquals(299.99, order.getTotalPrice());
-        assertEquals("PENDING", order.getPaymentStatus());
+        assertEquals(PaymentStatus.PENDING, order.getPaymentStatus());
         assertEquals("123 Main St", order.getShippingAddress());
         assertTrue(order.getItems().isEmpty());
     }
@@ -130,8 +130,8 @@ public class EntityModelTest {
     @Test
     public void testOrderPaymentStatusProgression() {
         OrderEntity order = new OrderEntity();
-        order.setPaymentStatus("PENDING");
-        assertEquals("PENDING", order.getPaymentStatus());
+        order.setPaymentStatus(PaymentStatus.PENDING);
+        assertEquals(PaymentStatus.PENDING, order.getPaymentStatus());
     }
 
     @Test

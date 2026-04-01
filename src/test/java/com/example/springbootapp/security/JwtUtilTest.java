@@ -77,30 +77,21 @@ public class JwtUtilTest {
     }
 
     @Test
-    public void generateTokenWithShortSecretGeneratesRandomKey() {
+    public void rejectsShortSecret() {
         String shortSecret = "short";
-        JwtUtil jwt = new JwtUtil(shortSecret, 3600000);
-        
-        String token = jwt.generateToken("user");
-        assertNotNull(token);
-        assertEquals("user", jwt.getUsernameFromToken(token));
+        assertThrows(IllegalArgumentException.class, () -> new JwtUtil(shortSecret, 3600000),
+                "Should reject secrets shorter than 32 bytes");
     }
 
     @Test
-    public void generateTokenWithEmptySecretGeneratesRandomKey() {
-        JwtUtil jwt = new JwtUtil("", 3600000);
-        
-        String token = jwt.generateToken("user");
-        assertNotNull(token);
-        assertEquals("user", jwt.getUsernameFromToken(token));
+    public void rejectsEmptySecret() {
+        assertThrows(IllegalArgumentException.class, () -> new JwtUtil("", 3600000),
+                "Should reject empty secret");
     }
 
     @Test
-    public void generateTokenWithNullSecretGeneratesRandomKey() {
-        JwtUtil jwt = new JwtUtil(null, 3600000);
-        
-        String token = jwt.generateToken("user");
-        assertNotNull(token);
-        assertEquals("user", jwt.getUsernameFromToken(token));
+    public void rejectsNullSecret() {
+        assertThrows(IllegalArgumentException.class, () -> new JwtUtil(null, 3600000),
+                "Should reject null secret");
     }
 }

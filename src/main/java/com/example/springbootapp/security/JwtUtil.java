@@ -20,17 +20,23 @@ public class JwtUtil {
 
     public JwtUtil(@Value("${jwt.secret:}") String secret,
                    @Value("${jwt.expiration-ms:3600000}") long expirationMs) {
-        // Require at least 256 bits (32 bytes) for HMAC-SHA
-        Key k;
-        if (secret == null || secret.isBlank() || secret.getBytes().length < 32) {
-            logger.warn("JWT secret is missing or too short; generating a secure random key for runtime only. " +
-                    "Provide a 32+ byte secret via 'jwt.secret' for persistent tokens.");
-            k = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-        } else {
-            k = Keys.hmacShaKeyFor(secret.getBytes());
+        // Enforce at least 256 bits (32 bytes) for HMAC-SHA256
+        // Fail fast if JWT secret is missing or insufficient
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalArgumentException(
+                    "JWT secret is required and must be configured via 'jwt.secret' environment variable. " +
+                    "Provide a minimum 32-byte secure secret.");
         }
-        this.key = k;
+        
+        if (secret.getBytes().length < 32) {
+            throw new IllegalArgumentException(
+                    "JWT secret is too short. Minimum 32 bytes required, but got " + secret.getBytes().length + " bytes. " +
+                    "Generate a secure 32+ byte secret and set via 'jwt.secret' environment variable.");
+        }
+        
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.expirationMs = expirationMs;
+        logger.info("JWT utility initialized with {} byte secret", secret.getBytes().length);
     }
 
     public String generateToken(String username) {
